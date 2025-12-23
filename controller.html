@@ -145,6 +145,12 @@
       flex-wrap: wrap;
     }
 
+    .text-refresh-btn {
+      background: linear-gradient(120deg, #ffd477, #ff7af0);
+      color: #0b1220;
+      box-shadow: 0 10px 25px rgba(255, 180, 120, 0.35);
+    }
+
     button {
       border: none;
       border-radius: 12px;
@@ -273,6 +279,7 @@
         <h2>Controle</h2>
         <div class="actions">
           <button id="showBtn">Mostrar GC</button>
+          <button id="refreshBtn" class="text-refresh-btn">Atualizar texto</button>
           <button id="hideBtn" class="secondary">Ocultar GC</button>
         </div>
         <div class="status">
@@ -295,7 +302,8 @@
       backdrop: 'transparent',
       animation: 'slide',
       maxWidth: 960,
-      textLimit: 1000
+      textLimit: 1000,
+      textPulse: Date.now()
     };
 
     const els = {
@@ -310,7 +318,8 @@
       showBtn: document.getElementById('showBtn'),
       hideBtn: document.getElementById('hideBtn'),
       statusDot: document.getElementById('statusDot'),
-      statusText: document.getElementById('statusText')
+      statusText: document.getElementById('statusText'),
+      refreshBtn: document.getElementById('refreshBtn')
     };
 
     // Configura canal de comunicação (BroadcastChannel com fallback para localStorage)
@@ -366,6 +375,13 @@
     els.textLimit.addEventListener('input', (e) => broadcast({ textLimit: Number(e.target.value) || 1000 }));
     els.showBtn.addEventListener('click', () => broadcast({ show: true }));
     els.hideBtn.addEventListener('click', () => broadcast({ show: false }));
+    els.refreshBtn.addEventListener('click', () => {
+      broadcast({
+        textPulse: Date.now(),
+        title: els.title.value,
+        subtitle: els.subtitle.value
+      });
+    });
 
     // Ouve respostas do GC para sinalizar presença
     const handleMessage = (evt) => {

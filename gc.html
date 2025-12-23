@@ -40,12 +40,12 @@
       position: relative;
       min-width: 420px;
       width: 100%;
-      max-width: 960px;
+      max-width: 1024px;
       opacity: 0;
       transform: translateY(30px) scale(0.96);
-      transition: opacity 0.35s ease, transform 0.35s ease;
+      transition: opacity 0.4s ease, transform 0.4s ease;
       pointer-events: none;
-      filter: drop-shadow(0 20px 50px rgba(0,0,0,0.45));
+      filter: drop-shadow(0 22px 56px rgba(0,0,0,0.48));
     }
 
     #gcFrame.visible { opacity: 1; transform: translateY(0) scale(1); }
@@ -92,12 +92,94 @@
       --sub: #f1c9ff;
     }
 
+    /* Personalidades por tema */
+    body[data-theme="jornalismo"] .gc-shell {
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: linear-gradient(135deg, rgba(15, 24, 42, 0.92), rgba(24, 36, 64, 0.96));
+    }
+
+    body[data-theme="jornalismo"] .accent-1 {
+      background: linear-gradient(120deg, rgba(90, 214, 255, 0.18), transparent 60%);
+    }
+
+    body[data-theme="jornalismo"] .accent-2 {
+      background: radial-gradient(circle at 90% 0%, rgba(126, 224, 255, 0.18), transparent 40%);
+    }
+
+    body[data-theme="jornalismo"] .bar {
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+    }
+
+    body[data-theme="esportes"] .gc-shell {
+      border-radius: 10px 24px 14px 24px;
+      background: linear-gradient(135deg, #0f2014, #1f3b25);
+      border: 1px solid rgba(127, 255, 101, 0.35);
+    }
+
+    body[data-theme="esportes"] .accent-1 {
+      background: linear-gradient(140deg, rgba(0, 255, 120, 0.25), rgba(0, 180, 120, 0.05));
+      clip-path: polygon(0 0, 55% 0, 45% 100%, 0 100%);
+    }
+
+    body[data-theme="esportes"] .accent-2 {
+      background: linear-gradient(200deg, rgba(0, 255, 143, 0.18), transparent 60%);
+      clip-path: polygon(70% 0, 100% 0, 100% 100%, 52% 100%);
+      opacity: 0.8;
+    }
+
+    body[data-theme="esportes"] .bar {
+      background: linear-gradient(200deg, #89ff6d, #27ff8a);
+      clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
+    }
+
+    body[data-theme="esportes"] .content {
+      padding: 18px 22px 20px 18px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), transparent 40%);
+    }
+
+    body[data-theme="esportes"] .type-pill {
+      background: rgba(127, 255, 101, 0.14);
+      border-color: rgba(127, 255, 101, 0.45);
+      letter-spacing: 0.6px;
+    }
+
+    body[data-theme="entretenimento"] .gc-shell {
+      border-radius: 20px;
+      background: radial-gradient(circle at 15% 20%, rgba(255, 122, 240, 0.2), transparent 40%),
+        linear-gradient(135deg, #2f1142, #4a1a65 60%, #2f1142);
+      border: 1px solid rgba(255, 122, 240, 0.35);
+    }
+
+    body[data-theme="entretenimento"] .accent-1 {
+      background: linear-gradient(120deg, rgba(255, 122, 240, 0.25), rgba(255, 212, 119, 0.12));
+      clip-path: polygon(0 0, 75% 0, 60% 100%, 0 100%);
+    }
+
+    body[data-theme="entretenimento"] .accent-2 {
+      background: linear-gradient(200deg, rgba(255, 212, 119, 0.24), transparent 60%);
+      clip-path: polygon(40% 0, 100% 0, 100% 100%, 55% 100%);
+      opacity: 0.9;
+    }
+
+    body[data-theme="entretenimento"] .bar {
+      background: linear-gradient(200deg, #ff9ef8, #ff7af0 45%, #ffd477);
+    }
+
+    body[data-theme="entretenimento"] .type-pill {
+      background: rgba(255, 122, 240, 0.15);
+      border-color: rgba(255, 212, 119, 0.5);
+      letter-spacing: 0.55px;
+    }
+
     .gc-shell {
       background: linear-gradient(135deg, var(--panel), var(--panel-2));
       border-radius: 18px;
       overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.06);
       box-shadow: var(--shadow);
+      position: relative;
+      isolation: isolate;
     }
 
     .glow {
@@ -110,6 +192,16 @@
       pointer-events: none;
     }
 
+    .accent {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    .accent-1 { mix-blend-mode: screen; }
+    .accent-2 { mix-blend-mode: overlay; }
+
     .strip {
       display: grid;
       grid-template-columns: 8px auto;
@@ -121,32 +213,60 @@
     }
 
     .content {
-      padding: 16px 20px 18px;
+      padding: 18px 22px 20px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       position: relative;
       overflow: hidden;
     }
 
     .title {
-      font-size: 26px;
-      font-weight: 800;
+      font-size: 32px;
+      font-weight: 850;
       letter-spacing: 0.3px;
       color: var(--text);
       white-space: nowrap;
       transform-origin: left center;
       display: inline-block;
+      --fit-scale: 1;
+      transform: scaleX(var(--fit-scale));
+      transition: filter 0.35s ease;
     }
 
     .subtitle {
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 19px;
+      font-weight: 650;
       color: var(--sub);
       letter-spacing: 0.2px;
       white-space: nowrap;
       transform-origin: left center;
       display: inline-block;
+      --fit-scale: 1;
+      transform: scaleX(var(--fit-scale));
+      transition: filter 0.35s ease;
+    }
+
+    .text-refresh {
+      animation: textGlow 0.9s ease, textSweep 0.95s ease;
+      background-image: linear-gradient(120deg, rgba(255,255,255,0.18), rgba(255,255,255,0));
+      background-repeat: no-repeat;
+      background-size: 0% 100%;
+      background-position: 0 50%;
+      -webkit-background-clip: text;
+      color: var(--text);
+    }
+
+    @keyframes textGlow {
+      0% { filter: drop-shadow(0 0 0px rgba(255,255,255,0)); }
+      45% { filter: drop-shadow(0 6px 18px rgba(255,255,255,0.25)) brightness(1.25); }
+      100% { filter: drop-shadow(0 0 0px rgba(255,255,255,0)); }
+    }
+
+    @keyframes textSweep {
+      0% { background-size: 0% 100%; background-position: 0 50%; }
+      50% { background-size: 120% 100%; background-position: 100% 50%; }
+      100% { background-size: 0% 100%; background-position: 100% 50%; }
     }
 
     .meta {
@@ -160,7 +280,7 @@
     }
 
     .clock {
-      padding: 6px 12px;
+      padding: 7px 12px;
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.06);
       backdrop-filter: blur(6px);
@@ -168,6 +288,7 @@
       font-weight: 700;
       min-width: 86px;
       text-align: center;
+      letter-spacing: 0.6px;
     }
 
     .type-pill {
@@ -185,6 +306,8 @@
     <div id="gcFrame" class="anim-slide">
       <div class="gc-shell">
         <div class="glow"></div>
+        <div class="accent accent-1"></div>
+        <div class="accent accent-2"></div>
         <div class="strip">
           <div class="bar"></div>
           <div class="content">
@@ -204,12 +327,12 @@
     // Utilidade para medir e comprimir texto sem quebra de linha
     function fitText(el, limitPx) {
       if (!el) return;
-      el.style.transform = 'scaleX(1)';
+      el.style.setProperty('--fit-scale', 1);
       const available = Math.max(1, limitPx || el.offsetWidth || 1);
       // Usa scrollWidth para descobrir a largura real do texto
       const width = el.scrollWidth;
       const scale = width > available ? available / width : 1;
-      el.style.transform = `scaleX(${scale})`;
+      el.style.setProperty('--fit-scale', scale);
     }
 
     const state = {
@@ -222,6 +345,7 @@
       animation: 'slide',
       maxWidth: 960,
       textLimit: 1000,
+      textPulse: Date.now()
     };
 
     const els = {
@@ -267,6 +391,15 @@
       fitText(els.subtitle, limit);
     }
 
+    function triggerTextAnimation() {
+      [els.title, els.subtitle].forEach((node) => {
+        node.classList.remove('text-refresh');
+        // reflow to restart animation
+        void node.offsetWidth;
+        node.classList.add('text-refresh');
+      });
+    }
+
     function setVisibility(show) {
       const frame = els.frame;
       frame.classList.remove('hiding');
@@ -290,6 +423,7 @@
     }
 
     function applyState(update = {}) {
+      const previousPulse = state.textPulse;
       Object.assign(state, update);
       els.title.textContent = state.title || ' ';
       els.subtitle.textContent = state.subtitle || ' ';
@@ -300,6 +434,9 @@
       applyTexts(state.textLimit);
       setVisibility(state.show);
       updateClock();
+      if (update.title !== undefined || update.subtitle !== undefined || previousPulse !== state.textPulse) {
+        triggerTextAnimation();
+      }
     }
 
     function sendReady() {
