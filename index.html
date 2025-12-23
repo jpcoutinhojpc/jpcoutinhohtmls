@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criador de GC</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <h1>Gerador de GC Profissional</h1>
+      <p>Monte artes diferentes para jornalismo, entretenimento e esportes, com animações e ajuste automático de texto.</p>
+    </header>
+
+    <section class="app__content">
+      <form class="panel" id="controls">
+        <div class="panel__section">
+          <label for="tipoGc">Tipo de GC</label>
+          <select id="tipoGc" name="tipoGc">
+            <option value="jornal">Jornalismo</option>
+            <option value="entretenimento">Entretenimento</option>
+            <option value="esporte">Esporte</option>
+          </select>
+        </div>
+
+        <div class="panel__section">
+          <label for="titulo">Título</label>
+          <input id="titulo" name="titulo" type="text" placeholder="Ex.: Última hora" value="Destaque principal" />
+        </div>
+
+        <div class="panel__section">
+          <label for="subtitulo">Subtítulo</label>
+          <input id="subtitulo" name="subtitulo" type="text" placeholder="Descrição complementar" value="Resumo compacto da notícia ou chamada" />
+        </div>
+
+        <div class="panel__section panel__row">
+          <label for="largura">Largura máxima do GC (px)</label>
+          <input id="largura" name="largura" type="number" min="320" max="1400" value="900" />
+        </div>
+
+        <div class="panel__section panel__row">
+          <label for="mostrarRelogio">Exibir relógio</label>
+          <input id="mostrarRelogio" type="checkbox" checked />
+        </div>
+
+        <div class="panel__section">
+          <label for="fundo">Cor de fundo</label>
+          <select id="fundo" name="fundo">
+            <option value="transparente">Transparente</option>
+            <option value="verde">Verde (chroma key)</option>
+            <option value="azul">Azul (chroma key)</option>
+          </select>
+        </div>
+
+        <div class="panel__section">
+          <label for="animacao">Animação de entrada/saída</label>
+          <select id="animacao" name="animacao">
+            <option value="slide">Slide suave</option>
+            <option value="fade">Fade elegante</option>
+            <option value="zoom">Zoom cinematográfico</option>
+          </select>
+        </div>
+
+        <div class="panel__section panel__row">
+          <button type="button" id="mostrar">Mostrar GC</button>
+          <button type="button" id="ocultar">Ocultar GC</button>
+        </div>
+      </form>
+
+      <section class="preview">
+        <div class="preview__grid">
+          <div class="preview__controls">
+            <h2>Pré-visualização</h2>
+            <p class="help">Altere os campos para ver o comportamento de compressão, animação e variações de tema.</p>
+            <ul class="hints">
+              <li>O texto comprime automaticamente se ultrapassar a largura configurada.</li>
+              <li>Altere a cor de fundo para usar chroma key verde, azul ou modo transparente.</li>
+              <li>Botões de mostrar/ocultar disparam as animações de entrada e saída.</li>
+            </ul>
+          </div>
+          <div class="gc-wrapper" id="gcWrapper">
+            <div class="gc" id="gc">
+              <div class="gc__relogio" id="relogio"></div>
+              <div class="gc__texto">
+                <div class="gc__titulo" id="gcTitulo"></div>
+                <div class="gc__subtitulo" id="gcSubtitulo"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
