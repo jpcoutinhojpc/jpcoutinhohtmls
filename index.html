@@ -1,98 +1,514 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Criador de GC</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Central de GC • Jornal, Entretenimento e Esporte</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #04070f;
+      --painel: rgba(15, 19, 33, 0.85);
+      --borda: rgba(255, 255, 255, 0.12);
+      --texto: #e8edf7;
+      --azul: #3b82f6;
+      --verde: #16a34a;
+      --magenta: #ec4899;
+      --amarelo: #facc15;
+      --cinza: #111827;
+      --sombra: 0 18px 60px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at 18% 12%, rgba(59, 130, 246, 0.14), transparent 32%),
+                  radial-gradient(circle at 82% 0%, rgba(236, 72, 153, 0.18), transparent 38%),
+                  radial-gradient(circle at 50% 90%, rgba(22, 163, 74, 0.24), transparent 38%),
+                  linear-gradient(135deg, #060812, #02040a 50%, #060812);
+      color: var(--texto);
+      min-height: 100vh;
+      padding: 28px;
+      display: grid;
+      gap: 20px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+
+    p.lead {
+      margin: 0;
+      opacity: 0.76;
+      max-width: 860px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .painel {
+      background: var(--painel);
+      border: 1px solid var(--borda);
+      border-radius: 16px;
+      box-shadow: var(--sombra);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .painel h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+
+    .grupo { display: grid; gap: 8px; margin-bottom: 14px; }
+    label { font-weight: 600; font-size: 14px; }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--borda);
+      background: rgba(255,255,255,0.04);
+      color: var(--texto);
+      font-size: 14px;
+      outline: none;
+    }
+
+    input[type="range"] { width: 100%; }
+
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--borda);
+      background: rgba(255,255,255,0.05);
+      color: var(--texto);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .pill.active {
+      background: linear-gradient(135deg, var(--azul), #60a5fa);
+      color: #031025;
+      border-color: transparent;
+      box-shadow: 0 12px 40px rgba(96,165,250,0.35);
+    }
+
+    .painel-controles { display: grid; gap: 14px; }
+
+    .tipo-bloco {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--borda);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .tipo-cabeca {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .dot.jornal { background: var(--azul); }
+    .dot.entretenimento { background: var(--magenta); }
+    .dot.esporte { background: var(--verde); }
+
+    .sub { opacity: 0.7; font-size: 13px; }
+
+    .toggle { display: flex; align-items: center; gap: 10px; }
+    .toggle input { width: auto; }
+
+    .preview-area {
+      background: rgba(7, 11, 20, 0.82);
+      border: 1px solid var(--borda);
+      border-radius: 18px;
+      padding: 16px;
+      min-height: 480px;
+      box-shadow: var(--sombra);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .gc-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 12px;
+      padding: 10px;
+      min-height: 86px;
+      pointer-events: none;
+    }
+
+    .gc-clock {
+      min-width: 110px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 700;
+      color: #031025;
+      background: linear-gradient(135deg, #ffffff, #dbeafe);
+      box-shadow: 0 12px 26px rgba(0,0,0,0.25);
+      letter-spacing: 0.03em;
+    }
+
+    .gc {
+      position: relative;
+      padding: 12px 18px 12px 18px;
+      border-radius: 14px;
+      min-width: 320px;
+      overflow: hidden;
+      color: var(--texto);
+      box-shadow: var(--sombra);
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: background 0.3s ease, border-color 0.3s ease;
+      max-width: 900px;
+    }
+
+    .gc::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(120deg, rgba(255,255,255,0.14), transparent 36%);
+      opacity: 0.7;
+    }
+
+    .gc-body { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+    .gc-textos { display: grid; gap: 4px; min-width: 0; }
+
+    .titulo {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      transform-origin: left center;
+      transition: transform 0.2s ease;
+    }
+
+    .subtitulo {
+      font-size: 14px;
+      opacity: 0.9;
+      white-space: nowrap;
+      transform-origin: left center;
+      transition: transform 0.2s ease;
+    }
+
+    .etiqueta {
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .tema-jornal { background: linear-gradient(135deg, #0f172a, #111827 60%, #0b1020); }
+    .tema-entretenimento { background: linear-gradient(135deg, #280a3a, #8b1d72 60%, #ec4899); border-color: rgba(236,72,153,0.45); }
+    .tema-esporte { background: linear-gradient(125deg, #0f3c2e, #065f46 50%, #14b8a6); border-color: rgba(20,184,166,0.45); }
+
+    .fundo-verde { box-shadow: 0 14px 42px rgba(22,163,74,0.28); }
+    .fundo-azul { box-shadow: 0 14px 42px rgba(59,130,246,0.28); }
+    .fundo-transparente { background: rgba(255,255,255,0.05); border-style: dashed; }
+
+    .gc-limite { font-size: 12px; opacity: 0.7; }
+
+    .gc-wrapper.entrada { animation: entrada 0.7s ease; }
+    .gc-wrapper.saida { animation: saida 0.6s ease; }
+
+    @keyframes entrada {
+      0% { transform: translateY(24px); opacity: 0; filter: blur(6px); }
+      100% { transform: translateY(0); opacity: 1; filter: blur(0); }
+    }
+
+    @keyframes saida {
+      0% { transform: translateY(0); opacity: 1; filter: blur(0); }
+      100% { transform: translateY(26px); opacity: 0; filter: blur(6px); }
+    }
+
+    @media (max-width: 1040px) {
+      body { padding: 18px; }
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <main class="app">
-    <header class="app__header">
-      <h1>Gerador de GC Profissional</h1>
-      <p>Monte artes diferentes para jornalismo, entretenimento e esportes, com animações e ajuste automático de texto.</p>
-    </header>
+  <header>
+    <h1>Central de GC</h1>
+    <p class="lead">Painel com controles independentes para jornalismo, entretenimento e esporte. Escolha fundos, limite de largura, relógio opcional e animações de entrada/saída.</p>
+  </header>
 
-    <section class="app__content">
-      <form class="panel" id="controls">
-        <div class="panel__section">
-          <label for="tipoGc">Tipo de GC</label>
-          <select id="tipoGc" name="tipoGc">
-            <option value="jornal">Jornalismo</option>
-            <option value="entretenimento">Entretenimento</option>
-            <option value="esporte">Esporte</option>
-          </select>
+  <div class="layout">
+    <aside class="painel">
+      <h2>Preferências gerais</h2>
+      <div class="grupo">
+        <label>Relógio</label>
+        <div class="toggle">
+          <input type="checkbox" id="relogio" checked />
+          <span>Exibir relógio em todos os GC's</span>
         </div>
+      </div>
 
-        <div class="panel__section">
-          <label for="titulo">Título</label>
-          <input id="titulo" name="titulo" type="text" placeholder="Ex.: Última hora" value="Destaque principal" />
+      <div class="grupo">
+        <label>Animação</label>
+        <div class="chips" id="animacao-chips">
+          <button class="pill active" data-animacao="entrada">Entrada</button>
+          <button class="pill" data-animacao="saida">Saída</button>
+          <button class="pill" data-animacao="replay">Reproduzir</button>
         </div>
+        <p class="gc-limite">Cada GC respeita sua própria largura máxima mesmo quando a animação é acionada.</p>
+      </div>
 
-        <div class="panel__section">
-          <label for="subtitulo">Subtítulo</label>
-          <input id="subtitulo" name="subtitulo" type="text" placeholder="Descrição complementar" value="Resumo compacto da notícia ou chamada" />
-        </div>
+      <div class="painel-controles" id="painel-controles">
+        <!-- blocos gerados via JS -->
+      </div>
+    </aside>
 
-        <div class="panel__section panel__row">
-          <label for="largura">Largura máxima do GC (px)</label>
-          <input id="largura" name="largura" type="number" min="320" max="1400" value="900" />
-        </div>
-
-        <div class="panel__section panel__row">
-          <label for="mostrarRelogio">Exibir relógio</label>
-          <input id="mostrarRelogio" type="checkbox" checked />
-        </div>
-
-        <div class="panel__section">
-          <label for="fundo">Cor de fundo</label>
-          <select id="fundo" name="fundo">
-            <option value="transparente">Transparente</option>
-            <option value="verde">Verde (chroma key)</option>
-            <option value="azul">Azul (chroma key)</option>
-          </select>
-        </div>
-
-        <div class="panel__section">
-          <label for="animacao">Animação de entrada/saída</label>
-          <select id="animacao" name="animacao">
-            <option value="slide">Slide suave</option>
-            <option value="fade">Fade elegante</option>
-            <option value="zoom">Zoom cinematográfico</option>
-          </select>
-        </div>
-
-        <div class="panel__section panel__row">
-          <button type="button" id="mostrar">Mostrar GC</button>
-          <button type="button" id="ocultar">Ocultar GC</button>
-        </div>
-      </form>
-
-      <section class="preview">
-        <div class="preview__grid">
-          <div class="preview__controls">
-            <h2>Pré-visualização</h2>
-            <p class="help">Altere os campos para ver o comportamento de compressão, animação e variações de tema.</p>
-            <ul class="hints">
-              <li>O texto comprime automaticamente se ultrapassar a largura configurada.</li>
-              <li>Altere a cor de fundo para usar chroma key verde, azul ou modo transparente.</li>
-              <li>Botões de mostrar/ocultar disparam as animações de entrada e saída.</li>
-            </ul>
-          </div>
-          <div class="gc-wrapper" id="gcWrapper">
-            <div class="gc" id="gc">
-              <div class="gc__relogio" id="relogio"></div>
-              <div class="gc__texto">
-                <div class="gc__titulo" id="gcTitulo"></div>
-                <div class="gc__subtitulo" id="gcSubtitulo"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+    <section class="preview-area">
+      <div class="preview-grid" id="preview-grid">
+        <!-- previews via JS -->
+      </div>
     </section>
-  </main>
+  </div>
 
-  <script src="script.js"></script>
+  <script>
+    const tipos = [
+      { id: 'jornal', titulo: 'Plantão: Últimas informações ao vivo', sub: 'Correspondentes trazem novas apurações', fundo: 'verde' },
+      { id: 'entretenimento', titulo: 'Apresentação especial do elenco', sub: 'Cobertura ao vivo direto do palco', fundo: 'azul' },
+      { id: 'esporte', titulo: 'Quartas de final começam agora', sub: 'Time escala ataque ofensivo para o jogo', fundo: 'verde' },
+    ];
+
+    const limitesPadrao = 900;
+    const controlesContainer = document.getElementById('painel-controles');
+    const previewGrid = document.getElementById('preview-grid');
+    const relogioCheckbox = document.getElementById('relogio');
+    const animacaoChips = document.getElementById('animacao-chips');
+    let animacaoAtual = 'entrada';
+
+    const estados = {};
+    const refs = {};
+
+    function criarBloco(tipo) {
+      const bloco = document.createElement('div');
+      bloco.className = 'tipo-bloco';
+      bloco.dataset.tipo = tipo.id;
+
+      bloco.innerHTML = `
+        <div class="tipo-cabeca">
+          <div>
+            <div class="badge"><span class="dot ${tipo.id}"></span>${tipo.id.charAt(0).toUpperCase()}${tipo.id.slice(1)}</div>
+            <div class="sub">Controle independente de texto e largura</div>
+          </div>
+          <div class="chips">
+            <button class="pill active" data-fundo="verde">Verde</button>
+            <button class="pill" data-fundo="azul">Azul</button>
+            <button class="pill" data-fundo="transparente">Transparente</button>
+          </div>
+        </div>
+
+        <div class="grupo">
+          <label>Título</label>
+          <input type="text" value="${tipo.titulo}" data-titulo />
+        </div>
+        <div class="grupo">
+          <label>Complemento</label>
+          <input type="text" value="${tipo.sub}" data-subtitulo />
+        </div>
+        <div class="grupo">
+          <label>Largura máxima (px)</label>
+          <input type="range" min="320" max="1200" value="${limitesPadrao}" data-largura />
+          <div class="gc-limite">Se o texto ultrapassar <span data-largura-label>${limitesPadrao}</span> px, ele se comprime automaticamente.</div>
+        </div>
+      `;
+
+      controlesContainer.appendChild(bloco);
+
+      estados[tipo.id] = {
+        titulo: tipo.titulo,
+        subtitulo: tipo.sub,
+        fundo: tipo.fundo,
+        largura: limitesPadrao,
+      };
+
+      refs[tipo.id] = {
+        fundoBotoes: bloco.querySelectorAll('[data-fundo]'),
+        tituloInput: bloco.querySelector('[data-titulo]'),
+        subInput: bloco.querySelector('[data-subtitulo]'),
+        larguraRange: bloco.querySelector('[data-largura]'),
+        larguraLabel: bloco.querySelector('[data-largura-label]'),
+      };
+    }
+
+    function criarPreview(tipo) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'gc-wrapper entrada';
+      wrapper.dataset.tipo = tipo.id;
+
+      wrapper.innerHTML = `
+        <div class="gc-clock" data-clock>${new Date().toLocaleTimeString('pt-BR', { hour12: false })}</div>
+        <div class="gc tema-${tipo.id} fundo-${tipo.fundo}" data-gc style="max-width: ${limitesPadrao + 80}px;">
+          <div class="gc-body">
+            <div class="gc-textos">
+              <div class="titulo" data-gc-titulo>${tipo.titulo}</div>
+              <div class="subtitulo" data-gc-sub>${tipo.sub}</div>
+            </div>
+            <div class="etiqueta" data-gc-etiqueta>${tipo.id === 'jornal' ? 'Jornal' : tipo.id === 'entretenimento' ? 'Entretenimento' : 'Esporte'}</div>
+          </div>
+        </div>
+      `;
+
+      previewGrid.appendChild(wrapper);
+
+      refs[tipo.id].wrapper = wrapper;
+      refs[tipo.id].gc = wrapper.querySelector('[data-gc]');
+      refs[tipo.id].titulo = wrapper.querySelector('[data-gc-titulo]');
+      refs[tipo.id].subtitulo = wrapper.querySelector('[data-gc-sub]');
+      refs[tipo.id].clock = wrapper.querySelector('[data-clock]');
+    }
+
+    function selecionarPill(buttons, alvo) {
+      buttons.forEach(btn => btn.classList.remove('active'));
+      alvo.classList.add('active');
+    }
+
+    function ajustarTexto(elemento, limitePx) {
+      const larguraDisponivel = limitePx;
+      const larguraConteudo = elemento.scrollWidth;
+      const fator = Math.min(1, larguraDisponivel / larguraConteudo);
+      elemento.style.transform = `scale(${fator})`;
+      elemento.style.transformOrigin = 'left center';
+    }
+
+    function aplicarEstado(tipo) {
+      const estado = estados[tipo];
+      const ref = refs[tipo];
+
+      ref.titulo.textContent = estado.titulo || 'Título do GC';
+      ref.subtitulo.textContent = estado.subtitulo || 'Linha complementar';
+      ref.gc.className = `gc tema-${tipo} fundo-${estado.fundo}`;
+      ref.gc.style.maxWidth = `${estado.largura + 80}px`;
+      ajustarTexto(ref.titulo, estado.largura);
+      ajustarTexto(ref.subtitulo, estado.largura);
+
+      if (relogioCheckbox.checked) {
+        ref.clock.style.display = 'block';
+      } else {
+        ref.clock.style.display = 'none';
+      }
+    }
+
+    function atualizarRelogios() {
+      const hora = new Date().toLocaleTimeString('pt-BR', { hour12: false });
+      Object.values(refs).forEach(ref => {
+        if (ref?.clock && relogioCheckbox.checked) {
+          ref.clock.textContent = hora;
+        }
+      });
+    }
+
+    function animar(tipo, modo) {
+      const alvo = refs[tipo].wrapper;
+      alvo.classList.remove('entrada', 'saida');
+      void alvo.offsetWidth;
+      alvo.classList.add(modo);
+    }
+
+    function registrarEventos(tipo) {
+      const { fundoBotoes, tituloInput, subInput, larguraRange, larguraLabel } = refs[tipo];
+
+      fundoBotoes.forEach(btn => {
+        if (btn.dataset.fundo === estados[tipo].fundo) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+          selecionarPill(fundoBotoes, btn);
+          estados[tipo].fundo = btn.dataset.fundo;
+          aplicarEstado(tipo);
+          animar(tipo, animacaoAtual);
+        });
+      });
+
+      tituloInput.addEventListener('input', (e) => {
+        estados[tipo].titulo = e.target.value;
+        aplicarEstado(tipo);
+        animar(tipo, animacaoAtual);
+      });
+
+      subInput.addEventListener('input', (e) => {
+        estados[tipo].subtitulo = e.target.value;
+        aplicarEstado(tipo);
+        animar(tipo, animacaoAtual);
+      });
+
+      larguraRange.addEventListener('input', (e) => {
+        const valor = Number(e.target.value);
+        estados[tipo].largura = valor;
+        larguraLabel.textContent = valor;
+        aplicarEstado(tipo);
+        animar(tipo, animacaoAtual);
+      });
+    }
+
+    function aplicarAnimacaoGlobal(alvo) {
+      const tipo = alvo.dataset.animacao;
+      if (tipo === 'replay') {
+        Object.keys(refs).forEach(chave => animar(chave, animacaoAtual));
+        return;
+      }
+      animacaoAtual = tipo;
+      Object.keys(refs).forEach(chave => animar(chave, animacaoAtual));
+    }
+
+    // Inicialização
+    tipos.forEach(criarBloco);
+    tipos.forEach(criarPreview);
+    tipos.forEach(t => registrarEventos(t.id));
+    Object.keys(estados).forEach(aplicarEstado);
+
+    animacaoChips.addEventListener('click', (e) => {
+      if (!e.target.matches('.pill')) return;
+      selecionarPill(animacaoChips.querySelectorAll('.pill'), e.target);
+      aplicarAnimacaoGlobal(e.target);
+    });
+
+    relogioCheckbox.addEventListener('change', () => {
+      Object.keys(estados).forEach(aplicarEstado);
+      Object.keys(refs).forEach(tipo => animar(tipo, animacaoAtual));
+    });
+
+    setInterval(atualizarRelogios, 1000);
+    atualizarRelogios();
+  </script>
 </body>
 </html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GC</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --font-primary: "Segoe UI", "Inter", system-ui, -apple-system, sans-serif;
+      --shadow: 0 20px 55px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      font-family: var(--font-primary);
+    }
+
+    body[data-backdrop="green"] { background: #00b140; }
+    body[data-backdrop="blue"] { background: #0057e7; }
+    body[data-backdrop="transparent"] { background: transparent; }
+
+    .layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      pointer-events: none;
+      padding: 40px;
+    }
+
+    #gcFrame {
+      position: relative;
+      min-width: 420px;
+      width: 100%;
+      max-width: 960px;
+      opacity: 0;
+      transform: translateY(30px) scale(0.96);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+      filter: drop-shadow(0 20px 50px rgba(0,0,0,0.45));
+    }
+
+    #gcFrame.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+    #gcFrame.anim-slide.visible { animation: slideIn 0.45s ease; }
+    #gcFrame.anim-slide.hiding { animation: slideOut 0.42s ease forwards; }
+    #gcFrame.anim-fade.visible { animation: fadeIn 0.4s ease; }
+    #gcFrame.anim-fade.hiding { animation: fadeOut 0.35s ease forwards; }
+    #gcFrame.anim-pop.visible { animation: popIn 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
+    #gcFrame.anim-pop.hiding { animation: popOut 0.36s ease forwards; }
+
+    @keyframes slideIn { from { opacity: 0; transform: translateY(40px) scale(0.95);} to { opacity:1; transform: translateY(0) scale(1);} }
+    @keyframes slideOut { from { opacity:1; transform: translateY(0) scale(1);} to { opacity: 0; transform: translateY(30px) scale(0.96);} }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(15px);} to { opacity:1; transform: translateY(0);} }
+    @keyframes fadeOut { from { opacity:1; transform: translateY(0);} to { opacity:0; transform: translateY(10px);} }
+    @keyframes popIn { 0% { opacity:0; transform: translateY(22px) scale(0.9);} 100% { opacity:1; transform: translateY(0) scale(1);} }
+    @keyframes popOut { 0% { opacity:1; transform: translateY(0) scale(1);} 100% { opacity:0; transform: translateY(18px) scale(0.9);} }
+
+    /* Temas */
+    body[data-theme="jornalismo"] {
+      --panel: rgba(18, 26, 46, 0.92);
+      --panel-2: rgba(25, 35, 62, 0.92);
+      --accent: #5ad6ff;
+      --accent-2: #7ee0ff;
+      --text: #eaf2ff;
+      --sub: #b6c4e0;
+    }
+
+    body[data-theme="esportes"] {
+      --panel: rgba(18, 27, 20, 0.92);
+      --panel-2: rgba(26, 44, 30, 0.92);
+      --accent: #7fff65;
+      --accent-2: #9bff80;
+      --text: #e8ffe4;
+      --sub: #b9f3b2;
+    }
+
+    body[data-theme="entretenimento"] {
+      --panel: rgba(36, 16, 44, 0.92);
+      --panel-2: rgba(52, 21, 65, 0.92);
+      --accent: #ff7af0;
+      --accent-2: #ffd477;
+      --text: #ffeefe;
+      --sub: #f1c9ff;
+    }
+
+    .gc-shell {
+      background: linear-gradient(135deg, var(--panel), var(--panel-2));
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: var(--shadow);
+    }
+
+    .glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 45%),
+        radial-gradient(circle at 80% 60%, color-mix(in srgb, var(--accent-2) 30%, transparent), transparent 50%);
+      filter: blur(24px);
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    .strip {
+      display: grid;
+      grid-template-columns: 8px auto;
+      position: relative;
+    }
+
+    .bar {
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+    }
+
+    .content {
+      padding: 16px 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      color: var(--text);
+      white-space: nowrap;
+      transform-origin: left center;
+      display: inline-block;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--sub);
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      transform-origin: left center;
+      display: inline-block;
+    }
+
+    .meta {
+      margin-top: 4px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      color: var(--sub);
+      font-size: 13px;
+      letter-spacing: 0.2px;
+    }
+
+    .clock {
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-weight: 700;
+      min-width: 86px;
+      text-align: center;
+    }
+
+    .type-pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body data-theme="jornalismo" data-backdrop="transparent">
+  <div class="layer">
+    <div id="gcFrame" class="anim-slide">
+      <div class="gc-shell">
+        <div class="glow"></div>
+        <div class="strip">
+          <div class="bar"></div>
+          <div class="content">
+            <div class="title" id="title">Título do GC</div>
+            <div class="subtitle" id="subtitle">Subtítulo</div>
+            <div class="meta">
+              <div class="type-pill" id="typePill">JORNALISMO</div>
+              <div class="clock" id="clock">00:00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Utilidade para medir e comprimir texto sem quebra de linha
+    function fitText(el, limitPx) {
+      if (!el) return;
+      el.style.transform = 'scaleX(1)';
+      const available = Math.max(1, limitPx || el.offsetWidth || 1);
+      // Usa scrollWidth para descobrir a largura real do texto
+      const width = el.scrollWidth;
+      const scale = width > available ? available / width : 1;
+      el.style.transform = `scaleX(${scale})`;
+    }
+
+    const state = {
+      theme: 'jornalismo',
+      title: 'Título do GC',
+      subtitle: 'Subtítulo',
+      show: false,
+      clock: true,
+      backdrop: 'transparent',
+      animation: 'slide',
+      maxWidth: 960,
+      textLimit: 1000,
+    };
+
+    const els = {
+      frame: document.getElementById('gcFrame'),
+      title: document.getElementById('title'),
+      subtitle: document.getElementById('subtitle'),
+      typePill: document.getElementById('typePill'),
+      clock: document.getElementById('clock')
+    };
+
+    // Configura canal de comunicação
+    let channel = null;
+    try {
+      if ('BroadcastChannel' in window) {
+        channel = new BroadcastChannel('gc-sync');
+      }
+    } catch (err) {
+      channel = null;
+    }
+
+    function applyTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      const label = theme === 'jornalismo' ? 'JORNALISMO' : theme === 'esportes' ? 'ESPORTES' : 'ENTRETENIMENTO';
+      els.typePill.textContent = label;
+    }
+
+    function applyBackdrop(value) {
+      document.body.setAttribute('data-backdrop', value);
+    }
+
+    function applyAnimation(name) {
+      const cls = `anim-${name}`;
+      els.frame.classList.remove('anim-slide', 'anim-fade', 'anim-pop');
+      els.frame.classList.add(cls);
+    }
+
+    function applySize(maxWidth) {
+      els.frame.style.maxWidth = `${maxWidth || 960}px`;
+    }
+
+    function applyTexts(limit) {
+      fitText(els.title, limit);
+      fitText(els.subtitle, limit);
+    }
+
+    function setVisibility(show) {
+      const frame = els.frame;
+      frame.classList.remove('hiding');
+      if (show) {
+        frame.classList.add('visible');
+      } else {
+        frame.classList.add('hiding');
+        setTimeout(() => frame.classList.remove('visible'), 420);
+      }
+    }
+
+    function updateClock() {
+      if (!state.clock) {
+        els.clock.style.display = 'none';
+        return;
+      }
+      els.clock.style.display = 'inline-flex';
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      els.clock.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+
+    function applyState(update = {}) {
+      Object.assign(state, update);
+      els.title.textContent = state.title || ' ';
+      els.subtitle.textContent = state.subtitle || ' ';
+      applyTheme(state.theme);
+      applyBackdrop(state.backdrop);
+      applyAnimation(state.animation);
+      applySize(state.maxWidth);
+      applyTexts(state.textLimit);
+      setVisibility(state.show);
+      updateClock();
+    }
+
+    function sendReady() {
+      const heartbeat = { ready: true, ts: Date.now() };
+      if (channel) channel.postMessage(heartbeat);
+      try {
+        localStorage.setItem('gc-sync-reply', JSON.stringify(heartbeat));
+      } catch (err) {
+        /* ignore */
+      }
+    }
+
+    // Comunicação: recebe payloads do controlador
+    const handleMessage = (payload) => {
+      if (!payload) return;
+      applyState(payload);
+      // Responde para o controlador saber que estamos vivos
+      sendReady();
+    };
+
+    if (channel) {
+      channel.addEventListener('message', (ev) => handleMessage(ev.data));
+    }
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'gc-sync') {
+        try {
+          const data = JSON.parse(e.newValue || '{}');
+          handleMessage(data);
+        } catch (err) {
+          /* ignore */
+        }
+      }
+    });
+
+    // Clock interval
+    setInterval(updateClock, 1000);
+
+    // Tenta aplicar último estado salvo
+    try {
+      const cached = localStorage.getItem('gc-sync');
+      if (cached) handleMessage(JSON.parse(cached));
+    } catch (err) {
+      /* ignore */
+    }
+
+    // Anuncia presença mesmo sem receber comandos
+    sendReady();
+  </script>
+</body>
+</html>
