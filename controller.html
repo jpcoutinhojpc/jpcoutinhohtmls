@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de GC</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220;
+      --panel: #0f1628;
+      --panel-2: #111a2f;
+      --accent: #5ad6ff;
+      --accent-2: #7fff9f;
+      --text: #e8f0ff;
+      --muted: #96a4c2;
+      --border: #1f2a43;
+      --radius: 14px;
+      --shadow: 0 20px 55px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 20% 20%, rgba(90, 214, 255, 0.18), transparent 35%),
+        radial-gradient(circle at 80% 0%, rgba(127, 255, 159, 0.18), transparent 35%),
+        var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Inter", system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+    }
+
+    .shell {
+      width: min(1100px, 100%);
+      background: linear-gradient(135deg, rgba(15, 22, 40, 0.98), rgba(11, 18, 32, 0.94));
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 26px;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 40% 60%, rgba(90, 214, 255, 0.08), transparent 32%),
+        radial-gradient(circle at 80% 20%, rgba(127, 255, 159, 0.12), transparent 30%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+      z-index: 1;
+      position: relative;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0.2px;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(90, 214, 255, 0.15);
+      border: 1px solid rgba(90, 214, 255, 0.35);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(17, 26, 47, 0.9), rgba(13, 20, 36, 0.92));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      color: var(--text);
+      letter-spacing: 0.2px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(90, 214, 255, 0.7);
+      box-shadow: 0 0 0 3px rgba(90, 214, 255, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .text-refresh-btn {
+      background: linear-gradient(120deg, #ffd477, #ff7af0);
+      color: #0b1220;
+      box-shadow: 0 10px 25px rgba(255, 180, 120, 0.35);
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      color: #0b1220;
+      background: linear-gradient(120deg, #5ad6ff, #7fff9f);
+      box-shadow: 0 10px 25px rgba(90, 214, 255, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      box-shadow: inset 0 0 0 1px var(--border);
+    }
+
+    button:hover { transform: translateY(-1px) scale(1.01); }
+    button:active { transform: translateY(0); }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .status {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #7fff9f;
+      box-shadow: 0 0 0 6px rgba(127, 255, 159, 0.15);
+    }
+
+    .footer-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="badge">GC Controller</div>
+      <h1>Painel de controle</h1>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Conteúdo</h2>
+        <label>
+          Tipo de GC
+          <select id="theme">
+            <option value="jornalismo">Jornalismo</option>
+            <option value="esportes">Esportes</option>
+            <option value="entretenimento">Entretenimento</option>
+          </select>
+        </label>
+        <label>
+          Título
+          <input id="title" type="text" placeholder="Digite o título" />
+        </label>
+        <label>
+          Subtítulo
+          <input id="subtitle" type="text" placeholder="Digite o subtítulo" />
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>Aparência</h2>
+        <div class="row">
+          <label>
+            Fundo
+            <select id="backdrop">
+              <option value="transparent">Transparente</option>
+              <option value="green">Verde (chroma)</option>
+              <option value="blue">Azul (chroma)</option>
+            </select>
+          </label>
+          <label>
+            Animação
+            <select id="animation">
+              <option value="slide">Slide</option>
+              <option value="fade">Fade</option>
+              <option value="pop">Pop</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>
+            Largura máxima do GC (px)
+            <input id="maxWidth" type="number" min="400" max="1600" value="960" />
+          </label>
+          <label>
+            Limite de texto (px)
+            <input id="textLimit" type="number" min="200" max="2000" value="1000" />
+          </label>
+        </div>
+        <div class="pill" style="margin-top:12px;">
+          <input id="clock" type="checkbox" checked style="accent-color:#5ad6ff;width:16px;height:16px;" />
+          <span>Mostrar relógio</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Controle</h2>
+        <div class="actions">
+          <button id="showBtn">Mostrar GC</button>
+          <button id="refreshBtn" class="text-refresh-btn">Atualizar texto</button>
+          <button id="hideBtn" class="secondary">Ocultar GC</button>
+        </div>
+        <div class="status">
+          <div class="dot" id="statusDot"></div>
+          <span id="statusText">Aguardando conexão com o GC...</span>
+        </div>
+        <p class="footer-note">Abra o <strong>gc.html</strong> em outra aba/janela (ou como Browser Source no OBS). Toda mudança é enviada em tempo real via BroadcastChannel/localStorage.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Estado central do GC
+    const state = {
+      theme: 'jornalismo',
+      title: '',
+      subtitle: '',
+      show: false,
+      clock: true,
+      backdrop: 'transparent',
+      animation: 'slide',
+      maxWidth: 960,
+      textLimit: 1000,
+      textPulse: Date.now()
+    };
+
+    const els = {
+      theme: document.getElementById('theme'),
+      title: document.getElementById('title'),
+      subtitle: document.getElementById('subtitle'),
+      clock: document.getElementById('clock'),
+      backdrop: document.getElementById('backdrop'),
+      animation: document.getElementById('animation'),
+      maxWidth: document.getElementById('maxWidth'),
+      textLimit: document.getElementById('textLimit'),
+      showBtn: document.getElementById('showBtn'),
+      hideBtn: document.getElementById('hideBtn'),
+      statusDot: document.getElementById('statusDot'),
+      statusText: document.getElementById('statusText'),
+      refreshBtn: document.getElementById('refreshBtn')
+    };
+
+    // Configura canal de comunicação (BroadcastChannel com fallback para localStorage)
+    let channel = null;
+    try {
+      if ('BroadcastChannel' in window) {
+        channel = new BroadcastChannel('gc-sync');
+      }
+    } catch (err) {
+      channel = null;
+    }
+
+    function broadcast(update) {
+      const payload = { ...state, ...update, ts: Date.now() };
+      Object.assign(state, update);
+      // BroadcastChannel
+      if (channel) {
+        channel.postMessage(payload);
+      }
+      // Fallback: localStorage (triggers "storage" event em outras abas)
+      try {
+        localStorage.setItem('gc-sync', JSON.stringify(payload));
+      } catch (err) {
+        /* storage pode falhar em modo privado */
+      }
+    }
+
+    function markConnected() {
+      els.statusDot.style.background = '#7fff9f';
+      els.statusDot.style.boxShadow = '0 0 0 6px rgba(127, 255, 159, 0.15)';
+      els.statusText.textContent = 'GC pronto para receber comandos.';
+    }
+
+    function markWaiting() {
+      els.statusDot.style.background = '#ffc658';
+      els.statusDot.style.boxShadow = '0 0 0 6px rgba(255, 198, 88, 0.25)';
+      els.statusText.textContent = 'Abra o gc.html para visualizar.';
+    }
+
+    function sendInitialIfAny() {
+      // Envia estado inicial para quem ouvir
+      broadcast({});
+    }
+
+    // Listeners de UI
+    els.theme.addEventListener('change', (e) => broadcast({ theme: e.target.value }));
+    els.title.addEventListener('input', (e) => broadcast({ title: e.target.value }));
+    els.subtitle.addEventListener('input', (e) => broadcast({ subtitle: e.target.value }));
+    els.clock.addEventListener('change', (e) => broadcast({ clock: e.target.checked }));
+    els.backdrop.addEventListener('change', (e) => broadcast({ backdrop: e.target.value }));
+    els.animation.addEventListener('change', (e) => broadcast({ animation: e.target.value }));
+    els.maxWidth.addEventListener('input', (e) => broadcast({ maxWidth: Number(e.target.value) || 960 }));
+    els.textLimit.addEventListener('input', (e) => broadcast({ textLimit: Number(e.target.value) || 1000 }));
+    els.showBtn.addEventListener('click', () => broadcast({ show: true }));
+    els.hideBtn.addEventListener('click', () => broadcast({ show: false }));
+    els.refreshBtn.addEventListener('click', () => {
+      broadcast({
+        textPulse: Date.now(),
+        title: els.title.value,
+        subtitle: els.subtitle.value
+      });
+    });
+
+    // Ouve respostas do GC para sinalizar presença
+    const handleMessage = (evt) => {
+      if (evt?.data?.ready) {
+        markConnected();
+      }
+    };
+
+    if (channel) channel.addEventListener('message', handleMessage);
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'gc-sync' || e.key === 'gc-sync-reply') {
+        try {
+          const data = JSON.parse(e.newValue || '{}');
+          if (data.ready) markConnected();
+        } catch (err) {
+          /* ignore */
+        }
+      }
+    });
+
+    // Se o GC não respondeu em 2s, fica em espera
+    markWaiting();
+    setTimeout(() => {
+      if (els.statusText.textContent.includes('Abra')) {
+        markWaiting();
+      }
+    }, 2000);
+
+    sendInitialIfAny();
+  </script>
+</body>
+</html>
