@@ -286,13 +286,13 @@
           <div class="dot" id="statusDot"></div>
           <span id="statusText">Aguardando conexão com o GC...</span>
         </div>
-        <p class="footer-note">Abra o <strong>gc.html</strong> em outra aba/janela (ou como Browser Source no OBS). Toda mudança é enviada em tempo real via BroadcastChannel/localStorage.</p>
+        <p class="footer-note">Abra o <strong>gc.html</strong> em outra aba/janela (ou como Browser Source no OBS). As mudanças de tema, fundo e animação são enviadas em tempo real; o texto só é aplicado quando você clicar em <strong>Atualizar texto</strong>.</p>
       </div>
     </div>
   </div>
 
   <script>
-    // Estado central do GC
+    // Estado central do GC (último valor aplicado) e rascunhos de texto
     const state = {
       theme: 'jornalismo',
       title: '',
@@ -304,6 +304,11 @@
       maxWidth: 960,
       textLimit: 1000,
       textPulse: Date.now()
+    };
+
+    const drafts = {
+      title: '',
+      subtitle: ''
     };
 
     const els = {
@@ -366,8 +371,8 @@
 
     // Listeners de UI
     els.theme.addEventListener('change', (e) => broadcast({ theme: e.target.value }));
-    els.title.addEventListener('input', (e) => broadcast({ title: e.target.value }));
-    els.subtitle.addEventListener('input', (e) => broadcast({ subtitle: e.target.value }));
+    els.title.addEventListener('input', (e) => { drafts.title = e.target.value; });
+    els.subtitle.addEventListener('input', (e) => { drafts.subtitle = e.target.value; });
     els.clock.addEventListener('change', (e) => broadcast({ clock: e.target.checked }));
     els.backdrop.addEventListener('change', (e) => broadcast({ backdrop: e.target.value }));
     els.animation.addEventListener('change', (e) => broadcast({ animation: e.target.value }));
@@ -378,8 +383,8 @@
     els.refreshBtn.addEventListener('click', () => {
       broadcast({
         textPulse: Date.now(),
-        title: els.title.value,
-        subtitle: els.subtitle.value
+        title: drafts.title,
+        subtitle: drafts.subtitle
       });
     });
 
